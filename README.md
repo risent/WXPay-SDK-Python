@@ -52,7 +52,7 @@ wxpay = WXPay(app_id='wx8888888998',
               key='123434556677888999987766543543322', 
               cert_pem_path='/path/to/apiclient_cert.pem',
               key_pem_path='/path/to/apiclient_key.pem',
-              timeout=6.0)
+              timeout=6000)  # 毫秒
              
 wxpay_resp_dict = wxpay.unifiedorder(dict(device_info='WEB',
                                           body='测试商家-商品类目',

@@ -59,18 +59,18 @@ _SIGN = 'sign'
 _FAIL = 'FAIL'
 _SUCCESS = 'SUCCESS'
 
-_default_timeout = 2  # seconds
-_micropay_url = 'https://api.mch.weixin.qq.com/pay/micropay'
-_unifiedorder_url = 'https://api.mch.weixin.qq.com/pay/unifiedorder'
-_orderquery_url = 'https://api.mch.weixin.qq.com/pay/orderquery'
-_reverse_url = 'https://api.mch.weixin.qq.com/secapi/pay/reverse'
-_closeorder_url = 'https://api.mch.weixin.qq.com/pay/closeorder'
-_refund_url = 'https://api.mch.weixin.qq.com/secapi/pay/refund'
-_refundquery_url = 'https://api.mch.weixin.qq.com/pay/refundquery'
-_downloadbill_url = 'https://api.mch.weixin.qq.com/pay/downloadbill'
-_report_url = 'https://api.mch.weixin.qq.com/pay/report'
-_shorturl_url = 'https://api.mch.weixin.qq.com/tools/shorturl'
-_authcodetoopenid_url = 'https://api.mch.weixin.qq.com/tools/authcodetoopenid'
+_DEFAULT_TIMEOUT = 6000  # 微秒
+_MICROPAY_URL = 'https://api.mch.weixin.qq.com/pay/micropay'
+_UNIFIEDORDER_URL = 'https://api.mch.weixin.qq.com/pay/unifiedorder'
+_ORDERQUERY_URL = 'https://api.mch.weixin.qq.com/pay/orderquery'
+_REVERSE_URL = 'https://api.mch.weixin.qq.com/secapi/pay/reverse'
+_CLOSEORDER_URL = 'https://api.mch.weixin.qq.com/pay/closeorder'
+_REFUND_URL = 'https://api.mch.weixin.qq.com/secapi/pay/refund'
+_REFUNDQUERY_URL = 'https://api.mch.weixin.qq.com/pay/refundquery'
+_DOWNLOADBILL_URL = 'https://api.mch.weixin.qq.com/pay/downloadbill'
+_REPORT_URL = 'https://api.mch.weixin.qq.com/pay/report'
+_SHORTURL_URL = 'https://api.mch.weixin.qq.com/tools/shorturl'
+_AUTHCODETOOPENID_URL = 'https://api.mch.weixin.qq.com/tools/authcodetoopenid'
 
 
 class WXPayUtil(object):
@@ -149,9 +149,9 @@ class SignInvalidException(Exception):
 
 class WXPay(object):
 
-    def __init__(self, app_id, mch_id, key, cert_pem_path, key_pem_path, timeout=_default_timeout):
+    def __init__(self, app_id, mch_id, key, cert_pem_path, key_pem_path, timeout=_DEFAULT_TIMEOUT):
         """
-        timeout: 单位秒，可以为浮点数
+        timeout: 网络请求超时时间，单位毫秒
         """
         self.app_id = app_id
         self.mch_id = mch_id
@@ -161,6 +161,11 @@ class WXPay(object):
         self.timeout = timeout
     
     def _process_response_xml(self, resp_xml):
+        """
+        处理微信支付返回的 xml 格式数据
+        :param resp_xml:
+        :return:
+        """
         resp_dict = WXPayUtil.xml2dict(resp_xml)
         if 'return_code' in resp_dict:
             return_code = resp_dict.get('return_code')
@@ -183,7 +188,7 @@ class WXPay(object):
         场景：刷卡支付
         """
         _timeout = self.timeout if timeout is None else timeout
-        resp_xml = self.request_without_cert(_micropay_url, data_dict, _timeout)
+        resp_xml = self.request_without_cert(_MICROPAY_URL, data_dict, _timeout)
         return self._process_response_xml(resp_xml)
     
     def unifiedorder(self, data_dict, timeout=None):
@@ -192,7 +197,7 @@ class WXPay(object):
         场景：公共号支付、扫码支付、APP支付
         """
         _timeout = self.timeout if timeout is None else timeout
-        resp_xml = self.request_without_cert(_unifiedorder_url, data_dict, _timeout)
+        resp_xml = self.request_without_cert(_UNIFIEDORDER_URL, data_dict, _timeout)
         return self._process_response_xml(resp_xml)
     
     def orderquery(self, data_dict, timeout=None):
@@ -201,7 +206,7 @@ class WXPay(object):
         场景：刷卡支付、公共号支付、扫码支付、APP支付
         """
         _timeout = self.timeout if timeout is None else timeout
-        resp_xml = self.request_without_cert(_orderquery_url, data_dict, _timeout)
+        resp_xml = self.request_without_cert(_ORDERQUERY_URL, data_dict, _timeout)
         return self._process_response_xml(resp_xml)
 
     def reverse(self, data_dict, timeout=None):
@@ -210,7 +215,7 @@ class WXPay(object):
         场景：刷卡支付
         """
         _timeout = self.timeout if timeout is None else timeout
-        resp_xml = self.request_with_cert(_reverse_url, data_dict, _timeout)
+        resp_xml = self.request_with_cert(_REVERSE_URL, data_dict, _timeout)
         return self._process_response_xml(resp_xml)
 
     def closeorder(self, data_dict, timeout=None):
@@ -219,7 +224,7 @@ class WXPay(object):
         场景：公共号支付、扫码支付、APP支付
         """
         _timeout = self.timeout if timeout is None else timeout
-        resp_xml = self.request_without_cert(_closeorder_url, data_dict, _timeout)
+        resp_xml = self.request_without_cert(_CLOSEORDER_URL, data_dict, _timeout)
         return self._process_response_xml(resp_xml)
 
     def refund(self, data_dict, timeout=None):
@@ -228,7 +233,7 @@ class WXPay(object):
         场景：刷卡支付、公共号支付、扫码支付、APP支付
         """
         _timeout = self.timeout if timeout is None else timeout
-        resp_xml = self.request_with_cert(_refund_url, data_dict, _timeout)
+        resp_xml = self.request_with_cert(_REFUND_URL, data_dict, _timeout)
         return self._process_response_xml(resp_xml)
 
     def refundquery(self, data_dict, timeout=None):
@@ -237,7 +242,7 @@ class WXPay(object):
         场景：刷卡支付、公共号支付、扫码支付、APP支付
         """
         _timeout = self.timeout if timeout is None else timeout
-        resp_xml = self.request_without_cert(_refundquery_url, data_dict, _timeout)
+        resp_xml = self.request_without_cert(_REFUNDQUERY_URL, data_dict, _timeout)
         return self._process_response_xml(resp_xml)
 
     def downloadbill(self, data_dict, timeout=None):
@@ -246,13 +251,12 @@ class WXPay(object):
         场景：刷卡支付、公共号支付、扫码支付、APP支付
         """
         _timeout = self.timeout if timeout is None else timeout
-        resp = self.request_without_cert(_downloadbill_url, data_dict, _timeout).strip()
+        resp = self.request_without_cert(_DOWNLOADBILL_URL, data_dict, _timeout).strip()
         if resp.startswith('<'): # 是xml，下载出错了
             resp_dict = WXPayUtil.xml2dict(resp)
         else:  # 下载成功，加一层封装
             resp_dict = {'return_code': 'SUCCESS', 'return_msg': '', 'data': resp}
         return resp_dict
-
 
     def report(self, data_dict, timeout=None):
         """
@@ -260,7 +264,7 @@ class WXPay(object):
         场景：刷卡支付、公共号支付、扫码支付、APP支付
         """
         _timeout = self.timeout if timeout is None else timeout
-        resp_xml = self.request_without_cert(_report_url, data_dict, _timeout)
+        resp_xml = self.request_without_cert(_REPORT_URL, data_dict, _timeout)
         resp_dict = WXPayUtil.xml2dict(resp_xml)
         return resp_dict
 
@@ -270,7 +274,7 @@ class WXPay(object):
         场景：刷卡支付、扫码支付
         """
         _timeout = self.timeout if timeout is None else timeout
-        resp_xml = self.request_without_cert(_shorturl_url, data_dict, _timeout)
+        resp_xml = self.request_without_cert(_SHORTURL_URL, data_dict, _timeout)
         return self._process_response_xml(resp_xml)
 
     def authcodetoopenid(self, data_dict, timeout=None):
@@ -279,7 +283,7 @@ class WXPay(object):
         场景：刷卡支付
         """
         _timeout = self.timeout if timeout is None else timeout
-        resp_xml = self.request_without_cert(_authcodetoopenid_url, data_dict, _timeout)
+        resp_xml = self.request_without_cert(_AUTHCODETOOPENID_URL, data_dict, _timeout)
         return self._process_response_xml(resp_xml)
 
     def is_signature_valid(self, xml_data):
@@ -298,15 +302,15 @@ class WXPay(object):
         new_data_dict['nonce_str'] = WXPayUtil.generate_nonce_str()
         return WXPayUtil.generate_signed_xml(new_data_dict, self.key)
 
-    def request_with_cert(self, url_str, data_dict, timeout):
+    def request_with_cert(self, url_str, data_dict, timeout=None):
         """ """
-        # print 'wxpay timeout:', timeout
         req_body = self.make_request_body(data_dict).encode('utf-8')
         req_headers = {'Content-Type': 'application/xml'}
+        _timeout = self.timeout if timeout is None else timeout
         resp = requests.post(url_str, 
                             data=req_body, 
                             headers=req_headers, 
-                            timeout=timeout,
+                            timeout=_timeout/1000.0,
                             cert=(self.cert_pem_path, self.key_pem_path),
                             verify=True)
         resp.encoding = 'utf-8'
@@ -315,15 +319,15 @@ class WXPay(object):
             return as_text(resp.text)
         raise Exception('HTTP response code is not 200')
 
-    def request_without_cert(self, url_str, data_dict, timeout):
+    def request_without_cert(self, url_str, data_dict, timeout=None):
         """ """
-        # print 'wxpay timeout:', timeout
         req_body = self.make_request_body(data_dict).encode('utf-8')
         req_headers = {'Content-Type': 'application/xml'}
+        _timeout = self.timeout if timeout is None else timeout
         resp = requests.post(url_str,
                              data=req_body,
                              headers=req_headers,
-                             timeout=timeout)
+                             timeout=_timeout/1000.0)
         resp.encoding = 'utf-8'
         if resp.status_code == 200:
             # print as_text(resp.text)
