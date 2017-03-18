@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name='pywxpay',
-    version='0.3',
+    version='0.4',
     description='python wxpay sdk.',
     long_description=open('README.rst').read(),
     author='wxpay',
