@@ -426,7 +426,7 @@ class WXPay(object):
             url = WXPayConstants.SANDBOX_CLOSEORDER_URL
         else:
             url = WXPayConstants.CLOSEORDER_URL
-        resp_xml = self.request_without_cert(url, data, _timeout)
+        resp_xml = self.request_without_cert(url, self.fill_request_data(data), _timeout)
         return self.process_response_xml(resp_xml)
 
     def refund(self, data, timeout=None):
