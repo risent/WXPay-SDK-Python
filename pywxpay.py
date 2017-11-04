@@ -99,6 +99,8 @@ class WXPayConstants(object):
     SANDBOX_SHORTURL_URL = "https://api.mch.weixin.qq.com/sandboxnew/tools/shorturl"
     SANDBOX_AUTHCODETOOPENID_URL = "https://api.mch.weixin.qq.com/sandboxnew/tools/authcodetoopenid"
 
+    SANDBOX_SIGN_KEY_URL = 'https://api.mch.weixin.qq.com/sandboxnew/pay/getsignkey'
+
 
 class WXPayUtil(object):
 
@@ -192,7 +194,7 @@ class WXPayUtil(object):
         sign = WXPayUtil.generate_signature(data, key, sign_type)
         new_data_dict[WXPayConstants.FIELD_SIGN] = sign
         return WXPayUtil.dict2xml( new_data_dict )
-    
+
     @staticmethod
     def generate_nonce_str():
         """ 生成随机字符串
@@ -248,6 +250,8 @@ class WXPay(object):
         self.sign_type = sign_type
         self.use_sandbox = use_sandbox
 
+        self._sandbox_key = None  # used for sandbox response validation
+
     def fill_request_data(self, data):
         """data中添加 appid、mch_id、nonce_str、sign_type、sign
 
@@ -265,7 +269,11 @@ class WXPay(object):
         else:
             raise Exception("Invalid sign_type: {}".format(self.sign_type))
 
-        new_data_dict['sign'] = WXPayUtil.generate_signature(new_data_dict, self.key, self.sign_type)
+        if self.use_sandbox:
+            key = self.get_sandbox_sign_key()
+        else:
+            key = self.key
+        new_data_dict['sign'] = WXPayUtil.generate_signature(new_data_dict, key, self.sign_type)
         return new_data_dict
 
     def is_response_signature_valid(self, data):
@@ -274,7 +282,11 @@ class WXPay(object):
         :param data: dict类型
         :return: bool
         """
-        return WXPayUtil.is_signature_valid(data, self.key, self.sign_type)
+        if self.use_sandbox:
+            key = self._sandbox_key
+        else:
+            key = self.key
+        return WXPayUtil.is_signature_valid(data, key, self.sign_type)
 
     def is_pay_result_notify_signature_valid(self, data):
         """支付结果通知中的签名是否合法
@@ -524,3 +536,24 @@ class WXPay(object):
             url = WXPayConstants.AUTHCODETOOPENID_URL
         resp_xml = self.request_without_cert(url, self.fill_request_data(data), _timeout)
         return self.process_response_xml(resp_xml)
+
+    def get_sandbox_sign_key(self, timeout=None):
+        _timeout = self.timeout if timeout is None else timeout
+        params = {
+            'mch_id': self.mch_id,
+            'nonce_str': WXPayUtil.generate_nonce_str()
+        }
+
+        sign = WXPayUtil.generate_signature(params,
+                                            self.key,
+                                            WXPayConstants.SIGN_TYPE_MD5)
+        params['sign'] = sign
+
+        url = WXPayConstants.SANDBOX_SIGN_KEY_URL
+        resp_xml = self.request_without_cert(url, params, _timeout)
+        resp_dict = WXPayUtil.xml2dict(resp_xml)
+        return_code = resp_dict.get('return_code')
+        if return_code == WXPayConstants.SUCCESS:
+            self._sandbox_key = resp_dict['sandbox_signkey']
+            return resp_dict['sandbox_signkey']
+        return None
